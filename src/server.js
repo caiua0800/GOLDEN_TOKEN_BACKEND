@@ -16,10 +16,11 @@ const port = process.env.PORT || 3000;
 
 // Configuração CORS
 const corsOptions = {
-  origin: 'https://golden-brasil-token-client.vercel.app',
+  origin: '*',
   methods: 'GET,POST,PUT,DELETE',
   allowedHeaders: 'Content-Type,Authorization',
 };
+
 app.use(cors(corsOptions));
 
 // Middleware para tratar JSON
