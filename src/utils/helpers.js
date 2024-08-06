@@ -1,9 +1,7 @@
 // utils/helpers.js
 const fs = require('fs');
 const path = require('path');
-const QRCode = require('qrcode');
 const AVLTree = require('./avlTree');
-const moment = require('moment');
 const SECRET_ENCRYPTION_KEY = process.env.SECRET_ENCRYPTION_KEY || 'default_secret_key';
 const crypto = require('crypto');
 
@@ -14,6 +12,7 @@ function loadDataIntoAVLTree(dataPath) {
     const data = JSON.parse(fs.readFileSync(dataPath, 'utf-8'));
     const avlTree = new AVLTree();
     data.forEach(cliente => avlTree.add(cliente.CPF, cliente));
+    console.log("Dados carregados na árvore AVL");
     return avlTree;
 }
 
@@ -36,29 +35,6 @@ function reloadAVLTree() {
     return loadDataIntoAVLTree(dataPath);
 }
 
-const formatDate = (dateString) => {
-    if (dateString) {
-        const date = new Date(dateString);
-        const day = String(date.getDate()).padStart(2, '0');
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const year = date.getFullYear();
-        return `${day}/${month}/${year}`;
-    } else {
-        return null;
-    }
-};
-
-const consultarALLOWSELL = (dateString) => {
-    if (dateString) {
-        const [day, month, year] = dateString.split('/').map(Number);
-        const inputDate = new Date(year, month - 1, day);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        return today < inputDate;
-    } else {
-        return false;
-    }
-};
 
 const processClientData = (cliente) => {
     // Inicializa os valores que serão calculados

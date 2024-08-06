@@ -36,6 +36,9 @@ module.exports = (avlTree) => {
     // Rota para criar um saque
     router.post('/criarSaque', clientController.createSaque(avlTree));
 
+    // Rota para criar um saque pelo admin
+    router.post('/createSaqueAdmin', adminController.createSaqueAdmin(avlTree));
+
     // Rota para retornar todos os clientes
     router.get('/allClientes', adminController.getAllClientes(avlTree));
 
@@ -68,6 +71,15 @@ module.exports = (avlTree) => {
 
     // Rota para criar um contrato
     router.post('/updateClientMoreThanOneInfo', clientController.updateClientMoreThanOneInfo(avlTree));
+
+    //Nova rota pra atualizar validação do cliente
+    router.post('/updateClienteValidacao', adminController.updateClienteValidacao(avlTree));
+
+    //Nova rota pra rendimento de um cliente
+    router.post('/atualizarContratosAtivosUmUsuario', adminController.atualizarContratosAtivosUmUsuario(avlTree));
+
+    //Nova rota pra rendimento de todos os clientes
+    router.get('/atualizarTodosContratosAtivos', adminController.atualizarTodosContratosAtivos(avlTree));
 
 
 
