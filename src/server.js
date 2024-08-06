@@ -7,18 +7,31 @@ const { loadDataIntoAVLTree } = require('./utils/helpers');
 const cron = require('node-cron');
 const mercadoPagoRoutes = require('./routes/mercadoPagoRoutes');
 const passwordRoutes = require('./routes/passwordRoutes');
-const adminController = require('./controllers/adminController'); // Importar o controlador
+const adminController = require('./controllers/adminController');
+const https = require('https');
+const fs = require('fs');
 
 const app = express();
 const port = process.env.PORT || 3000;
+
+// Configuração CORS
+const corsOptions = {
+  origin: 'https://golden-brasil-token-client.vercel.app',
+  methods: 'GET,POST,PUT,DELETE',
+  allowedHeaders: 'Content-Type,Authorization',
+};
+app.use(cors(corsOptions));
+
+// Middleware para tratar JSON
 app.use(express.json());
-app.use(cors());
 
+// Configuração para servir arquivos estáticos
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Carregar dados na AVL Tree
 const dataPath = path.join(__dirname, 'database/data.json');
-
 async function startServer() {
   try {
-
     const avlTree = loadDataIntoAVLTree(dataPath);
 
     app.use((req, res, next) => {
@@ -26,11 +39,13 @@ async function startServer() {
       next();
     });
 
+    // Rotas
     const clientRoutes = require('./routes/clientsRoutes')(avlTree);
     app.use('/clientes', clientRoutes);
     app.use('/mercado-pago', mercadoPagoRoutes);
     app.use('/api', passwordRoutes);
 
+    // Agendador de tarefas
     cron.schedule('0 2 * * *', async () => {
       try {
         console.log('Atualizando todos os contratos ativos...');
@@ -42,9 +57,15 @@ async function startServer() {
       timezone: "America/Sao_Paulo"
     });
 
+    // Configuração HTTPS
+    const options = {
+      key: fs.readFileSync('/etc/letsencrypt/live/servidor.modelodesoftwae.com/privkey.pem'),
+      cert: fs.readFileSync('/etc/letsencrypt/live/servidor.modelodesoftwae.com/fullchain.pem'),
+    };
 
-    app.listen(port, () => {
-      console.log(`Servidor rodando na porta ${port}`);
+    // Iniciar servidor HTTPS
+    https.createServer(options, app).listen(port, () => {
+      console.log(`Servidor HTTPS rodando na porta ${port}`);
     });
   } catch (error) {
     console.error('Erro ao iniciar o servidor:', error);
