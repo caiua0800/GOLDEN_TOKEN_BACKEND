@@ -81,6 +81,10 @@ module.exports = (avlTree) => {
     //Nova rota pra rendimento de todos os clientes
     router.get('/atualizarTodosContratosAtivos', adminController.atualizarTodosContratosAtivos(avlTree));
 
+    //Nova rota para obter notícias
+    router.get('/getAllNews', clientController.getAllNews(avlTree));
+
+
 
 
     return router;

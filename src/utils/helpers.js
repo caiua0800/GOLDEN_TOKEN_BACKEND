@@ -60,8 +60,8 @@ const processClientData = (cliente) => {
         }
 
         let valorAReceber = 0;
-        if (contrato.PURCHASEDATE && contrato.MAXIMUMNUMBEROFDAYSTOYIELD && contrato.TOTALSPENT && contrato.TOTALINCOME) {
-            valorAReceber = parseFloat(contrato.TOTALINCOME.replace(',', '.')) - lucroTotal;
+        if (contrato.MAXIMUMQUOTAYIELD && contrato.TOTALSPENT) {
+            valorAReceber = parseFloat(contrato.TOTALSPENT.replace(',', '.')) * (parseFloat(contrato.MAXIMUMQUOTAYIELD)/100);
         }
 
         if ((contrato.STATUS) == 1) {
@@ -81,7 +81,6 @@ const processClientData = (cliente) => {
     cliente.DISPONIVEL_SAQUE = totals.DISPONIVEL_SAQUE;
     cliente.TOTAL_COINS = totals.TOTAL_COINS;
     cliente.LUCRO_CONTRATOS = totals.LUCRO_CONTRATOS;
-    cliente.VALOR_A_RECEBER = totals.VALOR_A_RECEBER;
 
     // Adiciona o valor total de indicações (se aplicável)
     const indicacaoArray = cliente.INDICACOES || [];
@@ -113,6 +112,7 @@ const processClientData = (cliente) => {
         }, 0);
 
     cliente.VALOR_SACADO = valorSacado;
+    cliente.VALOR_A_RECEBER = (totals.VALOR_A_RECEBER -valorSacado);
 
     return cliente;
 };

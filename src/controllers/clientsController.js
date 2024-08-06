@@ -388,6 +388,23 @@ const clientController = {
         }
     },
 
+    getAllNews: () => async (req, res) => {
+        try {
+
+            const newsSnapshot = await db.collection('NEWS').get();
+            const newsArray = [];
+
+            newsSnapshot.forEach(doc => {
+                newsArray.push({ id: doc.id, ...doc.data() });
+            });
+
+            res.status(200).json(newsArray);
+        } catch (error) {
+            console.error('Erro ao buscar as notícias:', error);
+            res.status(500).send('Erro ao buscar as notícias.');
+        }
+    },
+
 
 };
 
