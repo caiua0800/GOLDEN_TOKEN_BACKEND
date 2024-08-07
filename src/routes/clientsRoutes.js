@@ -85,7 +85,7 @@ module.exports = (avlTree) => {
     router.get('/getAllNews', clientController.getAllNews(avlTree));
 
     //Nova rota para obter notícias
-    router.get('/indicacaoProcess', clientController.adicionarSaldoAoIndicador(avlTree));
+    router.post('/indicacaoProcess', clientController.adicionarSaldoAoIndicador(avlTree));
 
 
 
