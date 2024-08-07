@@ -517,6 +517,13 @@ const adminController = {
                     }
                 }
             }
+
+            const now = new Date();
+            const timestamp = now.toISOString(); 
+    
+            await db.collection('SYSTEM_VARIABLES').doc('RENDIMENTOS').set({
+                ULTIMO_RENDIMENTO: timestamp
+            }, { merge: true });
     
             if (failedUpdates.length > 0) {
                 return res.status(200).json({
