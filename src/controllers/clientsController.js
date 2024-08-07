@@ -106,7 +106,7 @@ const clientController = {
         if (!docId || !Array.isArray(updates) || updates.length === 0) {
             return res.status(400).send('DocId e atualizações são obrigatórios.');
         }
-    
+
         try {
             // Construir o objeto de atualização para o Firestore
             const updateFields = {};
@@ -115,23 +115,23 @@ const clientController = {
                     updateFields[field] = fieldNewValue;
                 }
             });
-    
+
             // Atualiza o cliente no Firestore
             const clienteRef = db.collection('USERS').doc(docId);
             await clienteRef.update(updateFields);
-    
+
             // Obtém o cliente atualizado do Firestore
             const clienteDoc = await clienteRef.get();
             if (clienteDoc.exists) {
                 const updatedCliente = clienteDoc.data();
-    
+
                 // Atualiza o cliente no arquivo local data.json
                 updateLocalDataFile(updatedCliente);
-    
+
                 // Remove o cliente antigo da AVL Tree e adiciona o cliente atualizado
                 avlTree.removeNode(docId); // Remove o cliente antigo da AVL Tree
                 avlTree.add(updatedCliente.CPF, updatedCliente); // Adiciona o cliente atualizado
-    
+
                 res.send('Cliente atualizado com sucesso.');
             } else {
                 res.status(404).send('Cliente não encontrado no Firestore.');
@@ -141,7 +141,7 @@ const clientController = {
             res.status(500).send('Erro ao atualizar o cliente.');
         }
     },
-    
+
 
     updateContrato: (avlTree) => async (req, res) => {
         const { docId, IDCONTRATO, fieldName, fieldNewValue } = req.body;
@@ -443,21 +443,20 @@ const clientController = {
             // Remove o campo INDICADOR do indicado
             await indicadoRef.update({ INDICADOR: db.FieldValue.delete() });
 
-            // Atualiza o indicador e o indicado na AVL Tree
+            // Prepara os dados atualizados para a AVL Tree
             const indicadorAtualizado = { ...indicadorData, INDICACAO: indicacaoArray };
+            const indicadoData = indicadoDoc.data();
+            indicadoData.INDICADOR = null; // Define INDICADOR como null para remoção
+
+            // Atualiza o indicador e o indicado na AVL Tree
             avlTree.removeNode(CPF_INDICADOR); // Remove o indicador antigo da AVL Tree
             avlTree.add(CPF_INDICADOR, indicadorAtualizado); // Adiciona o indicador atualizado
-
-            // Atualiza o indicado na AVL Tree
-            const indicadoData = indicadoDoc.data();
             avlTree.removeNode(CPF_INDICADO); // Remove o indicado antigo da AVL Tree
             avlTree.add(CPF_INDICADO, indicadoData); // Adiciona o indicado atualizado
 
             // Atualiza o arquivo local data.json com os dados atualizados
-            updateLocalDataFile({
-                [CPF_INDICADOR]: indicadorAtualizado,
-                [CPF_INDICADO]: indicadoData
-            });
+            updateLocalDataFile(indicadorAtualizado);
+            updateLocalDataFile(indicadoData);
 
             res.send('Saldo adicionado ao indicador com sucesso.');
         } catch (error) {
