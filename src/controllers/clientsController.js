@@ -405,6 +405,67 @@ const clientController = {
         }
     },
 
+    adicionarSaldoAoIndicador: (avlTree) => async (req, res) => {
+        const { CPF_INDICADOR, CPF_INDICADO, NAME_INDICADO, VALOR_INTEIRO } = req.body;
+
+        if (!CPF_INDICADOR || !CPF_INDICADO || !NAME_INDICADO || VALOR_INTEIRO === undefined) {
+            return res.status(400).send('CPF_INDICADOR, CPF_INDICADO, NAME_INDICADO e VALOR_INTEIRO são obrigatórios.');
+        }
+
+        try {
+            // Atualiza o documento do indicador no Firestore
+            const indicadorRef = db.collection('USERS').doc(CPF_INDICADOR);
+            const indicadorDoc = await indicadorRef.get();
+            if (!indicadorDoc.exists) {
+                return res.status(404).send('Indicador não encontrado no Firestore.');
+            }
+
+            const indicadorData = indicadorDoc.data();
+            const indicacaoArray = indicadorData.INDICACAO || [];
+
+            // Adiciona o novo objeto de indicação
+            indicacaoArray.push({
+                VALOR: VALOR_INTEIRO,
+                NAME: NAME_INDICADO,
+                CPF: CPF_INDICADO
+            });
+
+            // Atualiza o documento do indicador no Firestore
+            await indicadorRef.update({ INDICACAO: indicacaoArray });
+
+            // Atualiza o documento do indicado no Firestore
+            const indicadoRef = db.collection('USERS').doc(CPF_INDICADO);
+            const indicadoDoc = await indicadoRef.get();
+            if (!indicadoDoc.exists) {
+                return res.status(404).send('Indicado não encontrado no Firestore.');
+            }
+
+            // Remove o campo INDICADOR do indicado
+            await indicadoRef.update({ INDICADOR: db.FieldValue.delete() });
+
+            // Atualiza o indicador e o indicado na AVL Tree
+            const indicadorAtualizado = { ...indicadorData, INDICACAO: indicacaoArray };
+            avlTree.removeNode(CPF_INDICADOR); // Remove o indicador antigo da AVL Tree
+            avlTree.add(CPF_INDICADOR, indicadorAtualizado); // Adiciona o indicador atualizado
+
+            // Atualiza o indicado na AVL Tree
+            const indicadoData = indicadoDoc.data();
+            avlTree.removeNode(CPF_INDICADO); // Remove o indicado antigo da AVL Tree
+            avlTree.add(CPF_INDICADO, indicadoData); // Adiciona o indicado atualizado
+
+            // Atualiza o arquivo local data.json com os dados atualizados
+            updateLocalDataFile({
+                [CPF_INDICADOR]: indicadorAtualizado,
+                [CPF_INDICADO]: indicadoData
+            });
+
+            res.send('Saldo adicionado ao indicador com sucesso.');
+        } catch (error) {
+            console.error('Erro ao adicionar saldo ao indicador:', error);
+            res.status(500).send('Erro ao adicionar saldo ao indicador.');
+        }
+    },
+
 
 };
 
