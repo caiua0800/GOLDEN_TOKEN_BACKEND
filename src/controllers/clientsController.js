@@ -425,36 +425,33 @@ const clientController = {
 
             // Adiciona o novo objeto de indicação
             indicacaoArray.push({
-                VALOR: VALOR_INTEIRO,
+                VALOR: VALOR_INTEIRO * 0.1,
                 NAME: NAME_INDICADO,
                 CPF: CPF_INDICADO
             });
 
-            // Atualiza o documento do indicador no Firestore
             await indicadorRef.update({ INDICACAO: indicacaoArray });
+            console.log("ADICIONADO SALDO AO INDICADOR")
 
-            // Atualiza o documento do indicado no Firestore
             const indicadoRef = db.collection('USERS').doc(CPF_INDICADO);
             const indicadoDoc = await indicadoRef.get();
             if (!indicadoDoc.exists) {
                 return res.status(404).send('Indicado não encontrado no Firestore.');
             }
-
-            // Remove o campo INDICADOR do indicado
             await indicadoRef.update({ INDICADOR: db.FieldValue.delete() });
+            console.log("INDICADOR DELETADO DO INDICADO")
 
-            // Prepara os dados atualizados para a AVL Tree
+
             const indicadorAtualizado = { ...indicadorData, INDICACAO: indicacaoArray };
             const indicadoData = indicadoDoc.data();
-            indicadoData.INDICADOR = null; // Define INDICADOR como null para remoção
+            indicadoData.INDICADOR = null; 
 
-            // Atualiza o indicador e o indicado na AVL Tree
-            avlTree.removeNode(CPF_INDICADOR); // Remove o indicador antigo da AVL Tree
-            avlTree.add(CPF_INDICADOR, indicadorAtualizado); // Adiciona o indicador atualizado
-            avlTree.removeNode(CPF_INDICADO); // Remove o indicado antigo da AVL Tree
-            avlTree.add(CPF_INDICADO, indicadoData); // Adiciona o indicado atualizado
+    
+            avlTree.removeNode(CPF_INDICADOR); 
+            avlTree.add(CPF_INDICADOR, indicadorAtualizado); 
+            avlTree.removeNode(CPF_INDICADO);
+            avlTree.add(CPF_INDICADO, indicadoData); 
 
-            // Atualiza o arquivo local data.json com os dados atualizados
             updateLocalDataFile(indicadorAtualizado);
             updateLocalDataFile(indicadoData);
 
