@@ -78,7 +78,6 @@
 
 
 
-
 // server.js
 require('dotenv').config();
 const express = require('express');
@@ -123,7 +122,7 @@ const swaggerOptions = {
     },
     servers: [
       {
-        url: `https://localhost:${port}`, // Ajuste a URL para o seu servidor
+        url: 'https://servidor.modelodesoftwae.com', // Atualize com seu domínio
       },
     ],
   },
