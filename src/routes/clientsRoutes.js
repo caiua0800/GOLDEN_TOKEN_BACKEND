@@ -42,6 +42,9 @@ module.exports = (avlTree) => {
     // Rota para retornar todos os clientes
     router.get('/allClientes', adminController.getAllClientes(avlTree));
 
+    // Rota para retornar todos os clientes
+    router.get('/allClientes2', adminController.getAllClientes2(avlTree));
+
     // Rota para obter todos os contratos
     router.get('/obterDepositos', adminController.obterDepositos(avlTree));
 

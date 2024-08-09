@@ -4,6 +4,8 @@ const { auth, db } = require('../database/firebaseConfig');
 const { v4: uuidv4 } = require('uuid'); // Para gerar o código aleatório
 const moment = require('moment'); // Para formatar a data
 
+let cachedClientes = null;
+let lastUpdated = Date.now();
 
 const adminController = {
 
@@ -13,6 +15,23 @@ const adminController = {
     getAllClientes: (avlTree) => (req, res) => {
         console.log("SOLICITAÇÃO DE OBTER TODOS OS CLIENTES")
         const allClientes = avlTree.inOrderTraversal(avlTree.root);
+        res.json(allClientes);
+    },
+
+    getAllClientes2: (avlTree) => (req, res) => {
+        console.log("SOLICITAÇÃO DE OBTER TODOS OS CLIENTES");
+        
+        const cacheExpiration = 1000000; 
+    
+        if (cachedClientes && (Date.now() - lastUpdated < cacheExpiration)) {
+            console.log("Retornando dados do cache");
+            return res.json(cachedClientes);
+        }
+    
+        const allClientes = avlTree.inOrderTraversal(avlTree.root);
+        cachedClientes = allClientes;
+        lastUpdated = Date.now();
+    
         res.json(allClientes);
     },
 
