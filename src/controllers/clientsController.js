@@ -1,9 +1,11 @@
 // controllers/clientsController.js
 const { db } = require('../database/firebaseConfig');
-const { updateLocalDataFile, processClientData, encryptPassword, confirmIdentity } = require('../utils/helpers');
+const { updateLocalDataFile, processClientData, encryptPassword, getCurrentTimestamp, confirmIdentity } = require('../utils/helpers');
 const { v4: uuidv4 } = require('uuid'); // Para gerar o código aleatório
 const moment = require('moment'); // Para formatar a data
 const QRCode = require('qrcode');
+const admin = require('firebase-admin');
+const FieldValue = admin.firestore.FieldValue;
 
 
 const clientController = {
@@ -11,6 +13,7 @@ const clientController = {
     getClienteByCPF: (avlTree) => async (req, res) => {
         const { CPF } = req.body;
         if (!CPF) return res.status(400).send('O CPF é obrigatório.');
+        console.log("SOLICITAÇÃO DE OBTER DADOS DE UM CLIENTE")
 
         try {
             const cliente = avlTree.search(CPF);
@@ -67,6 +70,19 @@ const clientController = {
         }
     },
 
+
+    gerarSenhaCriptografada: (req, res) => {
+        const { PASSWORD } = req.body;
+
+        const encryptedPassword = encryptPassword(PASSWORD);
+
+        if(encryptPassword)
+            res.status(200).send(encryptedPassword);
+        else
+            res.status(400).send('Erro ao criptografar senha.');
+
+    },
+
     // Nova função para atualizar um cliente
     updateCliente: (avlTree) => async (req, res) => {
         const { docId, field, newValue } = req.body;
@@ -106,7 +122,7 @@ const clientController = {
         if (!docId || !Array.isArray(updates) || updates.length === 0) {
             return res.status(400).send('DocId e atualizações são obrigatórios.');
         }
-
+        console.log("SOLICITAÇÃO DE EDITAR DADOS DO CLIENTE");
         try {
             // Construir o objeto de atualização para o Firestore
             const updateFields = {};
@@ -149,6 +165,7 @@ const clientController = {
             return res.status(400).send('DocId, IDCONTRATO, fieldName e fieldNewValue são obrigatórios.');
         }
 
+
         try {
             // Obtém o cliente do Firestore
             const clienteRef = db.collection('USERS').doc(docId);
@@ -174,7 +191,7 @@ const clientController = {
                     // Remove o cliente antigo da AVL Tree e adiciona o cliente atualizado
                     avlTree.removeNode(docId);
                     avlTree.add(clienteData.CPF, clienteData);
-
+    
                     res.send('Contrato atualizado com sucesso.');
                 } else {
                     res.status(404).send('Contrato não encontrado.');
@@ -407,60 +424,62 @@ const clientController = {
 
     adicionarSaldoAoIndicador: (avlTree) => async (req, res) => {
         const { CPF_INDICADOR, CPF_INDICADO, NAME_INDICADO, VALOR_INTEIRO } = req.body;
-
+    
         if (!CPF_INDICADOR || !CPF_INDICADO || !NAME_INDICADO || VALOR_INTEIRO === undefined) {
             return res.status(400).send('CPF_INDICADOR, CPF_INDICADO, NAME_INDICADO e VALOR_INTEIRO são obrigatórios.');
         }
-
+    
         try {
+            const timestamp = getCurrentTimestamp(); // Obtém o timestamp atual
+    
             // Atualiza o documento do indicador no Firestore
             const indicadorRef = db.collection('USERS').doc(CPF_INDICADOR);
             const indicadorDoc = await indicadorRef.get();
             if (!indicadorDoc.exists) {
                 return res.status(404).send('Indicador não encontrado no Firestore.');
             }
-
+    
             const indicadorData = indicadorDoc.data();
             const indicacaoArray = indicadorData.INDICACAO || [];
-
-            // Adiciona o novo objeto de indicação
+    
+            // Adiciona o novo objeto de indicação com o timestamp
             indicacaoArray.push({
                 VALOR: VALOR_INTEIRO * 0.1,
                 NAME: NAME_INDICADO,
-                CPF: CPF_INDICADO
+                CPF: CPF_INDICADO,
+                TIMESTAMP: timestamp // Adiciona o timestamp
             });
-
+    
             await indicadorRef.update({ INDICACAO: indicacaoArray });
-            console.log("ADICIONADO SALDO AO INDICADOR")
-
+            console.log("ADICIONADO SALDO AO INDICADOR");
+    
             const indicadoRef = db.collection('USERS').doc(CPF_INDICADO);
             const indicadoDoc = await indicadoRef.get();
             if (!indicadoDoc.exists) {
                 return res.status(404).send('Indicado não encontrado no Firestore.');
             }
-            await indicadoRef.update({ INDICADOR: db.FieldValue.delete() });
-            console.log("INDICADOR DELETADO DO INDICADO")
-
-
+            await indicadoRef.update({ INDICADOR: FieldValue.delete() });
+            console.log("INDICADOR DELETADO DO INDICADO");
+    
             const indicadorAtualizado = { ...indicadorData, INDICACAO: indicacaoArray };
             const indicadoData = indicadoDoc.data();
-            indicadoData.INDICADOR = null; 
-
+            indicadoData.INDICADOR = null;
     
-            avlTree.removeNode(CPF_INDICADOR); 
-            avlTree.add(CPF_INDICADOR, indicadorAtualizado); 
+            avlTree.removeNode(CPF_INDICADOR);
+            avlTree.add(CPF_INDICADOR, indicadorAtualizado);
             avlTree.removeNode(CPF_INDICADO);
-            avlTree.add(CPF_INDICADO, indicadoData); 
-
+            avlTree.add(CPF_INDICADO, indicadoData);
+    
             updateLocalDataFile(indicadorAtualizado);
             updateLocalDataFile(indicadoData);
-
+    
             res.send('Saldo adicionado ao indicador com sucesso.');
         } catch (error) {
             console.error('Erro ao adicionar saldo ao indicador:', error);
             res.status(500).send('Erro ao adicionar saldo ao indicador.');
         }
     },
+    
 
 
 };

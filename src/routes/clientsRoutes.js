@@ -87,7 +87,11 @@ module.exports = (avlTree) => {
     //Nova rota para obter notícias
     router.post('/indicacaoProcess', clientController.adicionarSaldoAoIndicador(avlTree));
 
+    //Nova rota pra gerar senha critografada
+    router.post('/gerarCryptPass', clientController.gerarSenhaCriptografada);
 
+    //Novaa rota pra obter um deposito especifico
+    router.post('/getContrato', adminController.obterDeposito(avlTree))
 
 
     return router;

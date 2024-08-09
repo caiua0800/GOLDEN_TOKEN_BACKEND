@@ -83,10 +83,10 @@ const processClientData = (cliente) => {
     cliente.LUCRO_CONTRATOS = totals.LUCRO_CONTRATOS;
 
     // Adiciona o valor total de indicações (se aplicável)
-    const indicacaoArray = cliente.INDICACOES || [];
+    const indicacaoArray = cliente.INDICACAO || [];
     const totalIndicacaoValue = indicacaoArray.reduce((sum, indicacao) => {
-        if (indicacao.VALUE) {
-            const value = parseFloat(indicacao.VALUE.replace(',', '.'));
+        if (indicacao.VALOR) {
+            const value = parseFloat(indicacao.VALOR);
             !isNaN(value) && (sum += value);
         }
         return sum;
@@ -152,7 +152,17 @@ const confirmIdentity = async (USERNAME, PASSWORD, DocId, avlTree) => {
 }
 
 
+function getCurrentTimestamp() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0'); // Mês começa em 0
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const seconds = String(now.getSeconds()).padStart(2, '0');
+    
+    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+}
 
 
-
-module.exports = { loadDataIntoAVLTree, updateLocalDataFile, reloadAVLTree, processClientData, encryptPassword, confirmIdentity };
+module.exports = { loadDataIntoAVLTree, updateLocalDataFile, reloadAVLTree, processClientData, encryptPassword, confirmIdentity, getCurrentTimestamp };

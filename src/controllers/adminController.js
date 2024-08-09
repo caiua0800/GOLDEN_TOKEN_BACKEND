@@ -11,6 +11,7 @@ const adminController = {
 
     // Função existente para buscar todos os clientes
     getAllClientes: (avlTree) => (req, res) => {
+        console.log("SOLICITAÇÃO DE OBTER TODOS OS CLIENTES")
         const allClientes = avlTree.inOrderTraversal(avlTree.root);
         res.json(allClientes);
     },
@@ -29,8 +30,9 @@ const adminController = {
                 if (cliente.CONTRATOS && cliente.CONTRATOS.length > 0) {
                     const contratos = cliente.CONTRATOS.map(contrato => ({
                         ...contrato,
-                        CLIENT_NAME: cliente.NAME,  // Adiciona o nome do cliente a cada contrato
-                        CLIENT_CPF: cliente.CPF     // Adiciona o CPF do cliente a cada contrato
+                        CLIENT_NAME: cliente.NAME,
+                        CLIENT_CPF: cliente.CPF,
+                        INDICADOR: (cliente.INDICADOR != null) ? cliente.INDICADOR : null
                     }));
 
                     // Adiciona os contratos ao array de todos os contratos
@@ -45,6 +47,37 @@ const adminController = {
             res.status(500).send('Erro ao obter os depósitos.');
         }
     },
+
+
+    obterDeposito: (avlTree) => async (req, res) => {
+        const { userId, contratoId } = req.body;
+    
+        if (!userId) return res.status(400).send('O userId é obrigatório.');
+    
+        try {
+            const cliente = avlTree.search(userId);
+            if (cliente) {
+                // Verifique se cliente.contratos é um array
+                if (Array.isArray(cliente.CONTRATOS)) {
+                    const contratoUpdated = cliente.CONTRATOS.find(c => c.IDCOMPRA === contratoId);
+    
+                    if (contratoUpdated) {
+                        res.json(contratoUpdated);
+                    } else {
+                        res.status(404).send('Contrato não encontrado');
+                    }
+                } else {
+                    res.status(400).send('Contratos não encontrados para o cliente');
+                }
+            } else {
+                res.status(404).send('Cliente não encontrado');
+            }
+        } catch (error) {
+            console.error('Erro ao buscar o cliente:', error);
+            res.status(500).send('Erro ao buscar o cliente.');
+        }
+    },
+    
 
     getAllClientesWithPlusInfo: (avlTree) => async (req, res) => {
         try {
@@ -462,38 +495,38 @@ const adminController = {
         try {
             // Obtém todos os documentos da coleção 'USERS'
             const usersSnapshot = await db.collection('USERS').get();
-    
+
             if (usersSnapshot.empty) {
                 return res.status(200).send('Nenhum usuário encontrado.');
             }
-    
+
             let totalUpdated = 0;
             const failedUpdates = []; // Array para armazenar contratos que não foram atualizados
-    
+
             for (const userDoc of usersSnapshot.docs) {
                 const userData = userDoc.data();
-    
+
                 // Itera sobre os contratos do usuário
                 if (userData.CONTRATOS && userData.CONTRATOS.length > 0) {
                     let updateNeeded = false;
-    
+
                     userData.CONTRATOS.forEach((contrato) => {
                         if (contrato.STATUS === 1 && contrato.MAXIMUMQUOTAYIELD) {
                             const maxQuotaYield = parseFloat(contrato.MAXIMUMQUOTAYIELD);
                             const rendimentoAtual = parseFloat(contrato.RENDIMENTO_ATUAL);
-    
+
                             if (rendimentoAtual < maxQuotaYield) {
                                 const yieldPerDay = maxQuotaYield / (36 * 30);
                                 const rendimentoNovo = rendimentoAtual + yieldPerDay;
                                 contrato.RENDIMENTO_ATUAL = rendimentoNovo;
                                 updateNeeded = true;
-    
+
                                 // Imprime a mensagem de atualização para cada contrato
                                 console.log(`Contrato ${contrato.IDCOMPRA} do usuário ${userData.CPF} atualizado: Rendimento atual de ${rendimentoAtual.toFixed(2)} para ${rendimentoNovo.toFixed(2)}`);
                             }
                         }
                     });
-    
+
                     // Se necessário, atualiza o documento no Firestore
                     if (updateNeeded) {
                         try {
@@ -519,12 +552,12 @@ const adminController = {
             }
 
             const now = new Date();
-            const timestamp = now.toISOString(); 
-    
+            const timestamp = now.toISOString();
+
             await db.collection('SYSTEM_VARIABLES').doc('RENDIMENTOS').set({
                 ULTIMO_RENDIMENTO: timestamp
             }, { merge: true });
-    
+
             if (failedUpdates.length > 0) {
                 return res.status(200).json({
                     message: `Contratos atualizados com sucesso. Total de documentos atualizados: ${totalUpdated}`,
@@ -538,43 +571,43 @@ const adminController = {
             return res.status(500).send('Erro ao atualizar contratos.');
         }
     },
-    
-    
+
+
 
     atualizarContratosAtivosUmUsuario: (avlTree) => async (req, res) => {
         const { docId } = req.body;
         if (!docId) {
             return res.status(400).send('DocId é obrigatório.');
         }
-    
+
         try {
             // Obtém o documento do usuário específico pelo ID
             const userDoc = await db.collection('USERS').doc(docId).get();
-    
+
             if (userDoc.exists) {
                 const userData = userDoc.data();
-    
+
                 // Itera sobre os contratos do usuário
                 if (userData.CONTRATOS && userData.CONTRATOS.length > 0) {
                     let updateNeeded = false;
-    
+
                     userData.CONTRATOS.forEach((contrato) => {
                         if (contrato.STATUS === 1 && contrato.MAXIMUMQUOTAYIELD) {
                             const maxQuotaYield = parseFloat(contrato.MAXIMUMQUOTAYIELD);
                             const rendimentoAtual = parseFloat(contrato.RENDIMENTO_ATUAL);
-    
+
                             if (rendimentoAtual < maxQuotaYield) {
                                 const yieldPerDay = maxQuotaYield / (36 * 30);
                                 const rendimentoNovo = rendimentoAtual + yieldPerDay;
                                 contrato.RENDIMENTO_ATUAL = rendimentoNovo;
                                 updateNeeded = true;
-    
+
                                 // Imprime a mensagem de atualização para cada contrato
                                 console.log(`Contrato ${contrato.IDCOMPRA} atualizado: Rendimento atual de ${rendimentoAtual.toFixed(2)} para ${rendimentoNovo.toFixed(2)}`);
                             }
                         }
                     });
-    
+
                     // Se necessário, atualiza o documento no Firestore
                     if (updateNeeded) {
                         await db.collection('USERS').doc(docId).update({ CONTRATOS: userData.CONTRATOS });
@@ -582,7 +615,7 @@ const adminController = {
                         avlTree.removeNode(userData.CPF);
                         avlTree.add(userData.CPF, userData);
                     }
-    
+
                     return res.status(200).send('Contratos atualizados com sucesso.');
                 } else {
                     return res.status(200).send('Nenhum contrato para atualizar.');
@@ -595,7 +628,7 @@ const adminController = {
             return res.status(500).send('Erro ao atualizar contratos.');
         }
     },
-    
+
 
 
 
