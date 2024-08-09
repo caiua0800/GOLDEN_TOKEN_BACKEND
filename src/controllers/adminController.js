@@ -12,13 +12,13 @@ const adminController = {
 
 
     // Função existente para buscar todos os clientes
-    getAllClientes: (avlTree) => (req, res) => {
-        console.log("SOLICITAÇÃO DE OBTER TODOS OS CLIENTES")
-        const allClientes = avlTree.inOrderTraversal(avlTree.root);
-        res.json(allClientes);
-    },
+    // getAllClientes: (avlTree) => (req, res) => {
+    //     console.log("SOLICITAÇÃO DE OBTER TODOS OS CLIENTES")
+    //     const allClientes = avlTree.inOrderTraversal(avlTree.root);
+    //     res.json(allClientes);
+    // },
 
-    getAllClientesCached: (avlTree) => (req, res) => {
+    getAllClientes: (avlTree) => (req, res) => {
         console.log("SOLICITAÇÃO DE OBTER TODOS OS CLIENTES");
         
         const cacheExpiration = 1000000; 
