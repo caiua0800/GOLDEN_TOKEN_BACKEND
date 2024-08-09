@@ -18,7 +18,7 @@ const adminController = {
         res.json(allClientes);
     },
 
-    getAllClientes2: (avlTree) => (req, res) => {
+    getAllClientesCached: (avlTree) => (req, res) => {
         console.log("SOLICITAÇÃO DE OBTER TODOS OS CLIENTES");
         
         const cacheExpiration = 1000000; 
