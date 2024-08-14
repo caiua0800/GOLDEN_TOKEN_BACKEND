@@ -647,10 +647,6 @@ const adminController = {
             return res.status(500).send('Erro ao atualizar contratos.');
         }
     },
-
-
-
-
 };
 
 module.exports = adminController;

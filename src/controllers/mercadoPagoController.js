@@ -18,6 +18,10 @@ const criarPix = async (req, res) => {
     console.log("REQUEST");
     console.log(req.body);
 
+    // Adiciona a data de expiração (por exemplo, 1 hora a partir do momento atual)
+    const expirationDate = new Date();
+    expirationDate.setHours(expirationDate.getHours() + 1); // Expiração em 1 hora
+
     const body = {
       transaction_amount: req.body.transaction_amount,
       description: req.body.description,
@@ -28,7 +32,9 @@ const criarPix = async (req, res) => {
           type: req.body.identificationType,
           number: req.body.number
         }
-      }
+      },
+      // Define a data de expiração
+      date_of_expiration: expirationDate.toISOString()
     };
 
     const requestOptions = { idempotencyKey: uuidv4() };
@@ -44,6 +50,7 @@ const criarPix = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
 
 module.exports = {
   criarPix
