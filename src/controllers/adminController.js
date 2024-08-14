@@ -630,9 +630,9 @@ const adminController = {
                     // Se necessário, atualiza o documento no Firestore
                     if (updateNeeded) {
                         await db.collection('USERS').doc(docId).update({ CONTRATOS: userData.CONTRATOS });
-                        updateLocalDataFile(userData);
-                        avlTree.removeNode(userData.CPF);
-                        avlTree.add(userData.CPF, userData);
+                        // updateLocalDataFile(userData);
+                        // avlTree.removeNode(userData.CPF);
+                        // avlTree.add(userData.CPF, userData);
                     }
 
                     return res.status(200).send('Contratos atualizados com sucesso.');
